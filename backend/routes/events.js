@@ -11,21 +11,41 @@ router.get('/', async (req, res) => {
 
 // Create event
 router.post('/', async (req, res) => {
-  const { title, description, startTime, endTime } = req.body;
-  const event = await prisma.event.create({
-    data: { title, description, startTime, endTime }
-  });
-  res.json(event);
+  try {
+    const { title, description, startTime, endTime } = req.body;
+    const event = await prisma.event.create({
+      data: {
+        title,
+        description,
+        startTime: new Date(startTime).toISOString(),
+        endTime: new Date(endTime).toISOString()
+      }
+    });
+    res.json(event);
+  } catch (error) {
+    console.error('POST /events error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Update event
 router.put('/:id', async (req, res) => {
-  const { title, description, startTime, endTime } = req.body;
-  const event = await prisma.event.update({
-    where: { id: Number(req.params.id) },
-    data: { title, description, startTime, endTime }
-  });
-  res.json(event);
+  try {
+    const { title, description, startTime, endTime } = req.body;
+    const event = await prisma.event.update({
+      where: { id: Number(req.params.id) },
+      data: {
+        title,
+        description,
+        startTime: new Date(startTime).toISOString(),
+        endTime: new Date(endTime).toISOString()
+      }
+    });
+    res.json(event);
+  } catch (error) {
+    console.error('PUT /events error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Delete event
