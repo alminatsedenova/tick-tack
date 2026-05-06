@@ -1,121 +1,83 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react'
+import { Calendar, dayjsLocalizer } from 'react-big-calendar'
+import dayjs from 'dayjs'
+import axios from 'axios'
+import 'react-big-calendar/lib/css/react-big-calendar.css'
+import EventModal from './components/EventModal'
+
+const localizer = dayjsLocalizer(dayjs)
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [events, setEvents] = useState([])
+  const [showModal, setShowModal] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState(null)
+  const [selectedEvent, setSelectedEvent] = useState(null)
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  const fetchEvents = async () => {
+    const res = await axios.get('/api/events')
+    const formatted = res.data.map(e => ({
+      ...e,
+      start: new Date(e.startTime),
+      end: new Date(e.endTime)
+    }))
+    setEvents(formatted)
+  }
+
+  const handleSelectSlot = (slotInfo) => {
+    setSelectedSlot(slotInfo)
+    setSelectedEvent(null)
+    setShowModal(true)
+  }
+
+  const handleSelectEvent = (event) => {
+    setSelectedEvent(event)
+    setSelectedSlot(null)
+    setShowModal(true)
+  }
+
+  const handleSave = async (eventData) => {
+    if (selectedEvent) {
+      await axios.put(`/api/events/${selectedEvent.id}`, eventData)
+    } else {
+      await axios.post('/api/events', eventData)
+    }
+    fetchEvents()
+    setShowModal(false)
+  }
+
+  const handleDelete = async () => {
+    await axios.delete(`/api/events/${selectedEvent.id}`)
+    fetchEvents()
+    setShowModal(false)
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <div style={{ height: '100vh', padding: '20px' }}>
+      <h1 style={{ marginBottom: '20px' }}>📅 My Calendar</h1>
+      <Calendar
+        localizer={localizer}
+        events={events}
+        startAccessor="start"
+        endAccessor="end"
+        style={{ height: 'calc(100vh - 100px)' }}
+        selectable
+        onSelectSlot={handleSelectSlot}
+        onSelectEvent={handleSelectEvent}
+      />
+      {showModal && (
+        <EventModal
+          slot={selectedSlot}
+          event={selectedEvent}
+          onSave={handleSave}
+          onDelete={handleDelete}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </div>
   )
 }
 
