@@ -110,6 +110,9 @@ function App() {
             onSelectSlot={handleSelectSlot}
             onSelectEvent={handleSelectEvent}
             toolbar={false}
+            min={new Date(2026, 0, 1, 7, 0, 0)}
+            max={new Date(2026, 0, 1, 22, 0, 0)}
+
             eventPropGetter={() => ({
               style: {
                 backgroundColor: '#91f5ad',
